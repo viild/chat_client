@@ -88,49 +88,19 @@ int main(int argc, char *argv[])
   ////////////////////////////
  //// 	Protocol		 ////
 ////////////////////////////
-	for(;;)
+	if((SocketFD = socket(AF_INET, SOCK_STREAM, 0)) == -1)
 	{
-		printf("Choose between two protocols:\n");
-		printf("1 - TCP\\IP:\n");
-		printf("2 - UDP\\IP:\n");
-		printf("Your choice: ");
-		scanf("%d", &option);
-		if(option == 1)
-		{
-			if((SocketFD = socket(AF_INET, SOCK_STREAM, 0)) == -1)
-			{
-				perror("Socket:create");
-				shutdown(SocketFD, SHUT_RDWR);
-				close(SocketFD);
-				return 1;
-			}
-			if((connect(SocketFD, Sadr &Server, sizeof(Server))) == -1)
-			{
-				perror("Connection");
-				shutdown(SocketFD, SHUT_RDWR);
-				close(SocketFD);
-				return 1;
-			}
-			mode = 1; //if TCP was selected
-			break;
-		}
-		else if(option == 2)
-		{
-			if((SocketFD = socket(AF_INET, SOCK_DGRAM, 0)) == -1)
-			{
-				perror("Socket:create");
-				shutdown(SocketFD, SHUT_RDWR);
-				close(SocketFD);
-				return 1;
-			}
-			mode = 2; //if UDP was selected
-			break;
-		}
-		else
-		{ 
-			printf("Wrong option. Try again.\n");
-			break;
-		}
+		perror("Socket:create");
+		shutdown(SocketFD, SHUT_RDWR);
+		close(SocketFD);
+		return 1;
+	}
+	if((connect(SocketFD, Sadr &Server, sizeof(Server))) == -1)
+	{
+		perror("Connection");
+		shutdown(SocketFD, SHUT_RDWR);
+		close(SocketFD);
+		return 1;
 	}
   ////////////////////////////
  //// 	Ask nickname	 ////
@@ -141,16 +111,10 @@ int main(int argc, char *argv[])
 		scanf("%s", nickname);
 		if(strlen(nickname) > 20) printf("Sorry, you can't use this name (a lot of characters)\n");
 	} while(strlen(nickname) > 20);
-	if(mode == 1) //if TCP
-	{
-		send(SocketFD, nickname, 20, 0); //Send nickname
-		recv(SocketFD, MyUID, 10, 0); //get UID from server
-	}
-	else if(mode == 2) //if UDP
-	{
-		sendto(SocketFD, nickname, 20, 0, (struct sockaddr*)&Server, sizeof(Server));//Send nickname
-		recvfrom(SocketFD, MyUID, 10, 0, (struct sockaddr*)&Server, &fromlen);//get UID from server
-	}
+
+	send(SocketFD, nickname, 20, 0); //Send nickname
+	recv(SocketFD, MyUID, 10, 0); //get UID from server
+
 	UID = atoi(MyUID);
   /////////////////////////////
  ///////  Build windows  /////
@@ -311,20 +275,11 @@ void * SendMessage(void *arg)
 			{
 				//send msg if msg is "exit"
 				done = 1;
-				switch(mode)
-				{
-					case 1:send(SocketFD, msg, sizeof(msg), 0); break;
-					case 2:sendto(SocketFD, msg, sizeof(msg), 0, (struct sockaddr*)&Server, sizeof(Server)); break;
-				}
+				send(SocketFD, msg, sizeof(msg), 0); break;
 			}
 			else 
 			{
-				//else send message "MyUID;toUID;message"
-				switch(mode)
-				{
-					case 1:send(SocketFD, buffer, sizeof(buffer), 0); break;
-					case 2:sendto(SocketFD, buffer, sizeof(buffer), 0, (struct sockaddr*)&Server, sizeof(Server)); break;
-				}
+				send(SocketFD, buffer, sizeof(buffer), 0); break;
 			}
 			wclear(messageBox);
 		}	
@@ -347,24 +302,10 @@ void * RecvMessage(void *arg)
 		wrefresh(chatBox);
 		wrefresh(messageBox);
 		memset(&rmessage, 0, sizeof(rmessage));
-		switch(mode)
-		{
-			//if TCP
-			case 1:
-			{
-				err = recv(SocketFD, rmessage, 290, 0); //get message
-				recv(SocketFD, md, 10, 0); //get mode message(private or public)
-				break;
-			}
-			//if UDP
-			case 2:
-			{
-				err = recvfrom(SocketFD, rmessage, 290, 0, (struct sockaddr*)&Server, &fromlen);//get message 
-				recvfrom(SocketFD, md, 10, 0, (struct sockaddr*)&Server, &fromlen);  //get mode message(private or public)
-				break;
-			}
-		}
-		//parse message
+		err = recv(SocketFD, rmessage, 290, 0); //get message
+
+		recv(SocketFD, md, 10, 0); //get mode message(private or public)
+			//parse message
 			int i = 0;
 			int uid = 0;
 			char bfUID[10];
