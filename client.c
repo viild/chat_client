@@ -321,7 +321,6 @@ void * RecvMessage(void *arg)
 			}
 			uid = atoi(bfUID);
 		//Print
-		//New comment
 		pthread_mutex_lock(&chat_mutex);
 		if (strlen(rmessage) > 0) 
 		{
