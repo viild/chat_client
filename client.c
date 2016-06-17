@@ -322,6 +322,7 @@ void * RecvMessage(void *arg)
 			uid = atoi(bfUID);
 		//Print
 		//com1
+		//com2
 		pthread_mutex_lock(&chat_mutex);
 		if (strlen(rmessage) > 0) 
 		{
