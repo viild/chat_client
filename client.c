@@ -323,6 +323,7 @@ void * RecvMessage(void *arg)
 		//Print
 		//com1
 		//com2
+		//com3
 		pthread_mutex_lock(&chat_mutex);
 		if (strlen(rmessage) > 0) 
 		{
